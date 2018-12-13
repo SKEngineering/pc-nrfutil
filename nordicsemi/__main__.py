@@ -520,6 +520,11 @@ def pkg():
               help='Firmware comment to be used in Zigbee OTA header.',
               required=False,
               type=click.STRING)
+@click.option('--qspi',
+              help='process hex for QSPI data and prepare.',
+              required=False,
+              is_flag=True,
+              type=click.BOOL)
 def generate(zipfile,
            debug_mode,
            application,
@@ -535,7 +540,8 @@ def generate(zipfile,
            zigbee,
            zigbee_manufacturer_id,
            zigbee_image_type,
-           zigbee_comment):
+           zigbee_comment,
+           qspi):
     """
     Generate a zip package for distribution to apps that support Nordic DFU OTA.
     The application, bootloader, and SoftDevice files are converted to .bin if supplied as .hex files.

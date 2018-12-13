@@ -73,7 +73,8 @@ class InitPacketPB(object):
                  sd_size=0,
                  app_size=0,
                  bl_size=0,
-                 sd_req=None
+                 sd_req=None,
+                 qspi_size=0
                  ):
 
         if from_bytes is not None:
@@ -88,6 +89,9 @@ class InitPacketPB(object):
 
         else:
             # construct from input variables
+            print " INITPACKET"
+            if qspi_size != 0:
+            	print "QSPI INITPACKET"
             if not sd_req:
                 sd_req = [0xfffe]  # Set to default value
             self.packet = pb.Packet()
@@ -108,13 +112,14 @@ class InitPacketPB(object):
             self.init_command.sd_size = sd_size
             self.init_command.bl_size = bl_size
             self.init_command.app_size = app_size
+            self.init_command.qspi_size = qspi_size
 
             self.packet.command.init.CopyFrom(self.init_command)
 
         self._validate()
 
     def _validate(self):
-        if self.init_command.type == pb.APPLICATION and self.init_command.app_size == 0:
+        if self.init_command.type == pb.APPLICATION and self.init_command.app_size == 0  and qspi_size == 0:
             raise RuntimeError("app_size is not set. It must be set when type is APPLICATION")
         elif self.init_command.type == pb.SOFTDEVICE and self.init_command.sd_size == 0:
             raise RuntimeError("sd_size is not set. It must be set when type is SOFTDEVICE")

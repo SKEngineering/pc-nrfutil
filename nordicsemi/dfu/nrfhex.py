@@ -38,6 +38,7 @@
 from nordicsemi.dfu import intelhex
 from struct import unpack
 from enum import Enum
+import os
 
 class nRFArch(Enum):
     NRF51 = 1
@@ -76,6 +77,12 @@ class nRFHex(intelhex.IntelHex):
             self.file_format = 'bin'
 
         self.loadfile(source, self.file_format)
+        
+        self.qspihex = None
+        self.qspisize = 0
+        self.qspistart = 0x12000000
+
+        self.process_qspi()
 
         self._removeuicr()
 
@@ -93,6 +100,20 @@ class nRFHex(intelhex.IntelHex):
         if maxaddress >= uicr_start_address:
             for i in range(uicr_start_address, maxaddress + 1):
                 self._buf.pop(i, 0)
+                
+    def process_qspi(self):
+        qspi_start_address = 0x12000000
+        maxaddress = self.maxaddr()
+        print "qspi=",hex(maxaddress)
+        if maxaddress >= qspi_start_address:
+            self.qspi = {}
+            self.qspisize=maxaddress + 1 - qspi_start_address
+            for i in range(qspi_start_address, maxaddress + 1):
+                self.qspi[i]=self._buf[i]
+                self._buf.pop(i, 0)
+            self.qspihex = intelhex.IntelHex(self.qspi)
+            print self.qspihex
+            print self.qspisize
 
     def address_has_magic_number(self, address):
         try:
@@ -181,6 +202,13 @@ class nRFHex(intelhex.IntelHex):
 
         if self.bootloaderhex is not None:
             self.bootloaderhex.tobinfile(fobj)
-
+        
+        if self.qspihex is not None:
+            print "write qspibin ",fobj 
+            mpath = os.path.dirname(fobj.name)+"/nrf_qspi.bin"
+            fobj2 = open(mpath, "wb")
+            print "write qspibin ",mpath 
+            self.qspihex.tobinfile(fobj2, start=self.qspistart, size=self.qspisize)
+            fobj2.close()
         if close_fd:
             fobj.close()

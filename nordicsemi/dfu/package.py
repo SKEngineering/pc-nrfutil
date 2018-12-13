@@ -63,7 +63,8 @@ HexTypeToInitPacketFwTypemap = {
     HexType.APPLICATION: DFUType.APPLICATION,
     HexType.BOOTLOADER: DFUType.BOOTLOADER,
     HexType.SOFTDEVICE: DFUType.SOFTDEVICE,
-    HexType.SD_BL: DFUType.SOFTDEVICE_BOOTLOADER
+    HexType.SD_BL: DFUType.SOFTDEVICE_BOOTLOADER,
+    HexType.QSPI: DFUType.APPLICATION
 }
 
 
@@ -126,7 +127,8 @@ class Package(object):
                  zigbee_format=False,
                  manufacturer_id=0,
                  image_type=0,
-                 comment=''):
+                 comment='',
+                 qspi=False):
         """
         Constructor that requires values used for generating a Nordic DFU package.
 
@@ -159,6 +161,11 @@ class Package(object):
             self.__add_firmware_info(firmware_type=HexType.APPLICATION,
                                      firmware_version=app_version,
                                      filename=app_fw,
+                                     init_packet_data=init_packet_vars)
+        if qspi:
+            self.__add_firmware_info(firmware_type=HexType.QSPI,
+                                     firmware_version=app_version,
+                                     filename="nrf_qspi.bin",
                                      init_packet_data=init_packet_vars)
 
         if sd_req is not None:
@@ -222,7 +229,8 @@ class Package(object):
         type_strs = {HexType.SD_BL : "sd_bl", 
                     HexType.SOFTDEVICE : "softdevice",
                     HexType.BOOTLOADER : "bootloader",
-                    HexType.APPLICATION : "application" }
+                    HexType.APPLICATION : "application",
+                    HexType.QSPI : "application"  }
 
         # parse init packet
         with open(os.path.join(self.zip_dir, img.dat_file), "rb") as imgf:
@@ -380,6 +388,10 @@ DFU Package: <{0}>:
             elif key == HexType.SD_BL:
                 bl_size = firmware_data[FirmwareKeys.BL_SIZE]
                 sd_size = firmware_data[FirmwareKeys.SD_SIZE]
+            
+            if key==HexType.QSPI:
+                qspi_size=os.path.getsize(self.work_dir+"/nrf_qspi.bin")
+                print "QSPI bin file found, size=",qspi_size
 
             init_packet = InitPacketPB(
                             from_bytes = None,
